@@ -13,6 +13,7 @@ import re
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+#import cv2
 
 
 def getFiles():
@@ -25,7 +26,7 @@ def getFiles():
 	field_coords = field_coords[:,field_coords[0,:] <= 257000]
 	field_coords = field_coords[:,field_coords[0,:] >=255000]
 	clusters, labels = getCentroids(field_coords[0:2,:])
-	path = 'E:/D17/SJER/2013/SJER_L1/SJER_Spectrometer/Reflectance/'
+	path = 'F:/D17/SJER/2013/SJER_L1/SJER_Spectrometer/Reflectance/'
 	files = os.listdir(path)
 	counter = 0
 	i = 1
@@ -35,7 +36,6 @@ def getFiles():
 			i = 5
 			f = h5py.File(path + files[counter], 'r')
 			shape = f['Reflectance'].shape
-			print(clusters)
 			map_info = f['/map info'][0].decode().split(',')
 			easting = float(map_info[3])
 			northing = float(map_info[4])
@@ -50,9 +50,10 @@ def getFiles():
 		x_end = x_start + 40
 		box = ((x_start, y_start), (x_end, y_end))
 		dset = f['Reflectance']
-		img = cleanData(dset,map_info,box)
-		coords = ((x_start + easting,x_end + easting),(northing - y_start,northing - y_end))
-		getLabels(coords,field_coords[0:3,labels == i], img, i)
+		img = cleanData(dset,map_info,box,i)
+		if img.size:
+			coords = ((x_start + easting,x_end + easting),(northing - y_start,northing - y_end))
+			getLabels(coords,field_coords[:,labels == i], img.shape, i)
 	return 
 
 def getTarget(df):
@@ -78,17 +79,18 @@ def getFeatures(df):
 	return X
 
 #Cut of edges
-def cleanData(dset, map_info, box):
+def cleanData(dset, map_info, box, counter):
 	X = dset[:, box[0][1]:box[1][1], box[0][0]:box[1][0]]
 	x = box[0][0]
 	y = box[0][1]
 	shape = X.shape[1:3]
+	if np.mean(X) == 15000:
+		return np.array([])
 	X = unravel(X)
 
 	lidar = getLidar(x,y,map_info,shape)
 	lidar = featureNorm(lidar,True)
 	#if lidar.shape == shape:
-	counter = 1
 	img = createImage(X,lidar,shape,counter)
 
 	return img
@@ -147,22 +149,19 @@ def getLidar(x,y,map_info,shape):
 	PL = np.array([1, column, -row])
 	x = np.dot(gt[0:3], PL)
 	y = np.dot(gt[3:6], PL)
-	print(file)
 	return lidar_array
 
-def getLabels(coords, field_coords, img, counter):
+def getLabels(coords, field_coords, shape, counter):
 	field_coords[0,:] = field_coords[0,:] - coords[0][0]
 	field_coords[1,:] = coords[1][0] - field_coords[1,:]
-	print(field_coords)
-	fig,ax = plt.subplots(1)
-	ax.imshow(img)
+	#fig,ax = plt.subplots(1)
+	#ax.imshow(img, interpolation='none')
+	labels = np.zeros((shape[0], shape[1]))
 	for i in range(field_coords.shape[1]):
-		circ = patches.Circle((field_coords[0,i], field_coords[1,i]), field_coords[2,i], linewidth=1, facecolor='none')
-		ax.add_patch(circ)
-	plt.show()
-	#fname = '../processed-data/composite_train_'  + str(counter) + '.jpg'
-	#scipy.misc.imsave(fname,img)
-	return 
+		rad = field_coords[2,i]
+		labels[field_coords[1,i]-rad:field_coords[1,i]+rad, field_coords[0,i]-rad:field_coords[0,i]+rad] = field_coords[3,i]
+	np.save("labels" + str(counter) + ".npy", labels)
+	return labels
 
 
 
@@ -179,8 +178,8 @@ def createImage(X,lidar,X_shape,counter):
 	img[:,:,2] = lidar
 	for i in range(3):
 		img[:,:,i] = (255/img[:,:,i].max() * (img[:,:,i] - img[:,:,i].min()))
-	#fname = '../processed-data/composite_'  + str(counter) + '.jpg'
-	#scipy.misc.imsave(fname,img)
+	fname = '../processed-data/composite_'  + str(counter) + '.jpg'
+	scipy.misc.imsave(fname,img)
 	return img
 
 
