@@ -24,7 +24,7 @@ def getFiles():
 	field_coords = field_coords[:,field_coords[0,:] <= 257000]
 	field_coords = field_coords[:,field_coords[0,:] >=255000]
 	clusters = getCentroids(field_coords[0:2,:])
-	path = 'E:/D17/SJER/2013/SJER_L1/SJER_Spectrometer/Reflectance/'
+	path = 'F:/D17/SJER/2013/SJER_L1/SJER_Spectrometer/Reflectance/'
 	files = os.listdir(path)
 	counter = 0
 	i = 1
