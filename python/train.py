@@ -42,4 +42,5 @@ with tf.Session(graph=graph) as Session:
 	print('Initialized')
 	for step in range(num_steps):
 		#do the classify
+		_,l = session.run([optimizer, loss])
 

@@ -5,10 +5,10 @@ import os
 import numpy as np
 
 
-path = 'C:/Users/Zach/Documents/Earth Lab/Deep-learning-class/raw-data/'
+path = '/media/zach/AOP-NEON1-4/D17/SJER/2013/SJER_L1/SJER_Spectrometer/Reflectance/'
 files = os.listdir(path)
 file = path + files[0]
-f = h5py.File(file, 'r')
+f = h5py.File(file)
 dset = f["/Reflectance"]
 
 y_start = 6015

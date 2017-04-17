@@ -8,7 +8,7 @@ from sklearn.externals import joblib
 from sklearn.cluster import KMeans
 import scipy.misc
 import re
-from osgeo import gdal
+import gdal
 import re
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -18,21 +18,18 @@ import xml.etree.cElementTree as ET
 
 
 def getFiles():
-	field_data = "C:/temp/neon_plants.csv"
+	field_data = "../raw-data/neon_plants.csv"
 	df = pd.read_csv(field_data, skiprows = 0)
 	east = df['easting']
 	north = df['northing']
 	y, rad, levels = getTarget(df)
 	field_coords = np.vstack((east, north, rad, y))
-	field_coords = field_coords[:,field_coords[0,:] <= 257000]
-	field_coords = field_coords[:,field_coords[0,:] >=255000]
 	plots, labels = getPlots(field_coords[0:2,:])
-	path = 'F:/D17/SJER/2013/SJER_L1/SJER_Spectrometer/Reflectance/'
+	path = '/media/zach/AOP-NEON1-4/D17/SJER/2013/SJER_L1/SJER_Spectrometer/Reflectance/'
 	files = os.listdir(path)
 	counter = 0
 	match = False
 	i=0
-	print(plots.shape)
 	while i < plots.shape[1]:
 		counter = 0
 		while not match:
@@ -56,6 +53,7 @@ def getFiles():
 			dset = f['Reflectance']
 			img = cleanData(dset,map_info,box,i)
 			if img.size:
+				print(labels == i)
 				coords = ((x_start + easting,x_end + easting),(northing - y_start,northing - y_end))
 				getLabels(coords,field_coords[:,labels == i], img.shape, i, levels)
 		i = i+1
@@ -69,20 +67,16 @@ def getTarget(df):
 	return y, rad/2, levels
 
 def getPlots(X):
-	file = 'C:/temp/plots.csv'
+	file = '../raw-data/plots.csv'
 	df = pd.read_csv(file, skiprows = 0)
 	east = df['easting']
 	north = df['northing']
 	plots = np.vstack((east,north))
 	labels = np.zeros(len(X[0,:]))
-	lab1 = labels
-	lab2 = labels
-	for i in range(len(plots)):
+	for i in range(len(east)):
 		temp1 = X[0,:]-east[i]
 		temp2 = X[1,:]-north[i]
-		lab1[abs(temp1) <= 20] = 1
-		lab2[abs(temp2) <= 20] = 1
-		labels[lab1 == lab2] = i
+		labels[np.logical_and(temp1 <= 20, temp2 <= 20)] = i
 	return plots, labels
 
 
@@ -198,7 +192,7 @@ def getLabels(coords, field_coords, shape, counter, labels):
 		ET.SubElement(bbox, 'xmax').text = str(box[1])
 		ET.SubElement(bbox, 'ymin').text = str(box[2])
 		ET.SubElement(bbox, 'ymax').text = str(box[3])
-		name = labels[field_coords[3,i]]
+		name = labels[int(field_coords[3,i])]
 		ET.SubElement(obj, 'name').text = name
 	tree = ET.ElementTree(root)
 	tree.write('../processed-data/composite_' + str(counter) + '.xml')
