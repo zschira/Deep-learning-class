@@ -14,11 +14,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import xml.etree.cElementTree as ET
+from numpy import linalg as LA
 #import cv2
 
 
 def getFiles():
-	field_data = "../raw-data/neon_plants.csv"
+	field_data = '../raw-data/neon_plants.csv'
 	df = pd.read_csv(field_data, skiprows = 0)
 	east = df['easting']
 	north = df['northing']
@@ -53,7 +54,6 @@ def getFiles():
 			dset = f['Reflectance']
 			img = cleanData(dset,map_info,box,i)
 			if img.size:
-				print(labels == i)
 				coords = ((x_start + easting,x_end + easting),(northing - y_start,northing - y_end))
 				getLabels(coords,field_coords[:,labels == i], img.shape, i, levels)
 		i = i+1
@@ -72,11 +72,10 @@ def getPlots(X):
 	east = df['easting']
 	north = df['northing']
 	plots = np.vstack((east,north))
-	labels = np.zeros(len(X[0,:]))
+	labels = np.ones(len(X[0,:]))*1000
 	for i in range(len(east)):
-		temp1 = X[0,:]-east[i]
-		temp2 = X[1,:]-north[i]
-		labels[np.logical_and(temp1 <= 20, temp2 <= 20)] = i
+		dist = LA.norm(np.array([X[0,:] - east[i], X[1,:] - north[i]]), axis=0)
+		labels[dist <= 30] = i
 	return plots, labels
 
 
@@ -177,6 +176,11 @@ def getLabels(coords, field_coords, shape, counter, labels):
 	field_coords[1,:] = coords[1][0] - field_coords[1,:]
 	#labels = np.zeros((shape[0], shape[1]))
 	root = ET.Element("root")
+	ET.SubElement(root,"filename").text = "composite_" + str(counter) + ".jpg"
+	size = ET.SubElement(root,'size')
+	ET.SubElement(size,'width').text = str(40)
+	ET.SubElement(size,'height').text = str(40)
+	ET.SubElement(size,'depth').text = str(3)
 	for i in range(field_coords.shape[1]):
 		obj = ET.SubElement(root, 'object')
 		bbox = ET.SubElement(obj, 'bndbox')
@@ -195,7 +199,7 @@ def getLabels(coords, field_coords, shape, counter, labels):
 		name = labels[int(field_coords[3,i])]
 		ET.SubElement(obj, 'name').text = name
 	tree = ET.ElementTree(root)
-	tree.write('../processed-data/composite_' + str(counter) + '.xml')
+	tree.write('../processed-data/Annotations/composite_' + str(counter) + '.xml')
 	return 
 
 
@@ -213,7 +217,7 @@ def createImage(X,lidar,X_shape,counter):
 	img[:,:,2] = lidar
 	for i in range(3):
 		img[:,:,i] = (255/img[:,:,i].max() * (img[:,:,i] - img[:,:,i].min()))
-	fname = '../processed-data/composite_'  + str(counter) + '.jpg'
+	fname = '../processed-data/JPEGImages/composite_'  + str(counter) + '.jpg'
 	scipy.misc.imsave(fname,img)
 	return img
 

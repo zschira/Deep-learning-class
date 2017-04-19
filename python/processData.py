@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 
 
 def getFiles():
-	field_data = "C:/temp/neon_plants.csv"
+	field_data = '../raw-data/neon_plants.csv'
 	df = pd.read_csv(field_data, skiprows = 0)
 	east = df['easting']
 	north = df['northing']
@@ -24,12 +24,13 @@ def getFiles():
 	field_coords = field_coords[:,field_coords[0,:] <= 257000]
 	field_coords = field_coords[:,field_coords[0,:] >=255000]
 	clusters = getCentroids(field_coords[0:2,:])
-	path = 'F:/D17/SJER/2013/SJER_L1/SJER_Spectrometer/Reflectance/'
+	path = '/media/zach/AOP-NEON1-4/D17/SJER/2013/SJER_L1/SJER_Spectrometer/Reflectance/'
 	files = os.listdir(path)
 	counter = 0
 	i = 1
 	match = False
 	while not match:
+		print(counter)
 		f = h5py.File(path + files[counter], 'r')
 		shape = f['Reflectance'].shape
 		map_info = f['/map info'][0].decode().split(',')
@@ -44,7 +45,7 @@ def getFiles():
 	y_start = int(northing - clusters[i,1])
 	dset = f['Reflectance']
 	coords = cleanData(dset,map_info,y_start)
-	getLabels(coords,field_coords)
+	#getLabels(coords,field_coords)
 	return 
 
 def getTarget(df):
@@ -137,8 +138,8 @@ def getLidar(x,y,map_info,shape):
 	file = path + '2013_SJER_1_' + str(x1) + '_' + str(y1) + '_CHM.tif'
 	lidar = gdal.Open(file)
 	lidar_array = np.array(lidar.GetRasterBand(1).ReadAsArray())
-	column = round(round(easting + x)-x1)
-	row = round(y1-round(northing - y))
+	column = int(round(easting + x)-x1)
+	row = int(y1-round(northing - y))
 	lidar_array = lidar_array[row:shape[0]+row,column:shape[1]+column]
 	lidar_array[lidar_array == -9999] = 0
 	if not np.array_equal(lidar_array[lidar_array == 0], lidar_array):
@@ -172,6 +173,7 @@ def getLabels(coords,field_coords):
 
 def createImage(X,lidar,X_shape,counter):	
 	img = np.zeros((X_shape[0],X_shape[1],3))
+	print(img.shape)
 	for i in range(X_shape[1]):
 		img[:,i,0] = X[i*X_shape[0]:i*X_shape[0]+X_shape[0],0]
 		img[:,i,1] = X[i*X_shape[0]:i*X_shape[0]+X_shape[0],1]
@@ -213,3 +215,4 @@ getFiles()
 #outRasterSRS.ImportFromEPSG(4326)
 #outRaster.setProjection(outRasterSRS.ExportToWkt())
 #outband.FlushCache()
+

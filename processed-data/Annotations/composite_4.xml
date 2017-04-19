@@ -1,1 +1,1 @@
-<root />
+<root><filename>composite_4.jpg</filename><size><width>40</width><height>40</height><depth>3</depth></size><object><bndbox><xmin>34</xmin><xmax>39</xmax><ymin>0</ymin><ymax>9</ymax></bndbox><name>QUWI2</name></object><object><bndbox><xmin>0</xmin><xmax>7</xmax><ymin>23</ymin><ymax>32</ymax></bndbox><name>QUWI2</name></object></root>
