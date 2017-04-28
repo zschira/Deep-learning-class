@@ -8,7 +8,7 @@ from sklearn.externals import joblib
 from sklearn.cluster import KMeans
 import scipy.misc
 import re
-from osgeo import gdal
+import gdal
 import re
 import pandas as pd
 import matplotlib.pyplot as plt

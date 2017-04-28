@@ -1,0 +1,5 @@
+/home/zach/Documents/earth_lab/Deep-learning-class/processed-data/JPEGImages/composite_12.jpg
+/home/zach/Documents/earth_lab/Deep-learning-class/processed-data/JPEGImages/composite_15.jpg
+/home/zach/Documents/earth_lab/Deep-learning-class/processed-data/JPEGImages/composite_4.jpg
+/home/zach/Documents/earth_lab/Deep-learning-class/processed-data/JPEGImages/composite_3.jpg
+/home/zach/Documents/earth_lab/Deep-learning-class/processed-data/JPEGImages/composite_8.jpg

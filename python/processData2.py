@@ -23,7 +23,7 @@ def getFiles():
 	df = pd.read_csv(field_data, skiprows = 0)
 	east = df['easting']
 	north = df['northing']
-	y, rad, levels = getTarget(df)
+	y, rad, levels, loc = getTarget(df)
 	field_coords = np.vstack((east, north, rad, y))
 	plots, labels = getPlots(field_coords[0:2,:])
 	path = '/media/zach/AOP-NEON1-4/D17/SJER/2013/SJER_L1/SJER_Spectrometer/Reflectance/'
@@ -54,8 +54,7 @@ def getFiles():
 			dset = f['Reflectance']
 			img = cleanData(dset,map_info,box,i)
 			if img.size:
-				coords = ((x_start + easting,x_end + easting),(northing - y_start,northing - y_end))
-				getLabels(coords,field_coords[:,labels == i], img.shape, i, levels)
+				getLabels(plots[:,i],field_coords[:,labels == i], img.shape, i, levels,loc)
 		i = i+1
 	return 
 
@@ -64,7 +63,8 @@ def getTarget(df):
 	labels, levels = pd.factorize(species)
 	y = labels
 	rad = df['canopydiam_90deg']
-	return y, rad/2, levels
+	loc = df['pointid']
+	return y, rad/2, levels, loc
 
 def getPlots(X):
 	file = '../raw-data/plots.csv'
@@ -171,9 +171,9 @@ def getLidar(x,y,map_info,shape):
 	y = np.dot(gt[3:6], PL)
 	return lidar_array
 
-def getLabels(coords, field_coords, shape, counter, labels):
-	field_coords[0,:] = field_coords[0,:] - coords[0][0]
-	field_coords[1,:] = coords[1][0] - field_coords[1,:]
+def getLabels(plots, field_coords, shape, counter, labels, loc):
+	field_coords[0,:] = field_coords[0,:] - (plots[0]-20)
+	field_coords[1,:] = (plots[1]+20) - field_coords[1,:]
 	#labels = np.zeros((shape[0], shape[1]))
 	root = ET.Element("root")
 	ET.SubElement(root,"filename").text = "composite_" + str(counter) + ".jpg"
@@ -185,13 +185,27 @@ def getLabels(coords, field_coords, shape, counter, labels):
 		obj = ET.SubElement(root, 'object')
 		bbox = ET.SubElement(obj, 'bndbox')
 		rad = field_coords[2,i]
-		x1 = math.floor(field_coords[1,i]-rad)
-		x2 = math.ceil(field_coords[1,i]+rad)
-		y1 = math.floor(field_coords[0,i]-rad)
-		y2 = math.ceil(field_coords[0,i]+rad)
+		x1 = math.floor(field_coords[0,i]-rad)
+		x2 = math.ceil(field_coords[0,i]+rad)
+		y1 = math.floor(field_coords[1,i]-rad)
+		y2 = math.ceil(field_coords[1,i]+rad)
+		if 'S' in loc[i]:
+			y1 -= rad
+			y2 -= rad
+		if 'N' in loc[i]:
+			y1 += rad
+			y2 += rad
+		if 'W' in loc[i]:
+			x1 -= rad
+			x2 -= rad
+		if 'E' in loc[i]:
+			x1 += rad
+			x2 += rad
 		box = np.array([x1,x2,y1,y2])
+		box = box.astype(int)
 		box[box < 0] = 0
 		box[box > 39] = 39
+
 		ET.SubElement(bbox, 'xmin').text = str(box[0])
 		ET.SubElement(bbox, 'xmax').text = str(box[1])
 		ET.SubElement(bbox, 'ymin').text = str(box[2])
