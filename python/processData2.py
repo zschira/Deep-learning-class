@@ -33,6 +33,7 @@ def getFiles():
 	i=0
 	while i < plots.shape[1]:
 		counter = 0
+		match = False
 		while not match:
 			f = h5py.File(path + files[counter], 'r')
 			shape = f['Reflectance'].shape
@@ -204,7 +205,7 @@ def getLabels(plots, field_coords, shape, counter, labels, loc):
 		box = np.array([x1,x2,y1,y2])
 		box = box.astype(int)
 		box[box < 0] = 0
-		box[box > 39] = 39
+		box[box > 40] = 40
 
 		ET.SubElement(bbox, 'xmin').text = str(box[0])
 		ET.SubElement(bbox, 'xmax').text = str(box[1])

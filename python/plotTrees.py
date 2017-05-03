@@ -5,7 +5,7 @@ from PIL import Image
 import numpy as np
 
 
-def plotTrees(num):
+def plotTrees(num, counter):
 	fig,ax = plt.subplots(1)
 	img = Image.open('../processed-data/JPEGImages/composite_' + str(num) + '.jpg')
 	ax.imshow(img)
@@ -20,8 +20,7 @@ def plotTrees(num):
 		rect = patches.Rectangle((x1,y1), x2-x1, y2-y1,linewidth=1,edgecolor='r',facecolor='none')
 		ax.add_patch(rect)
 	plt.show()
-plotTrees(3)
-plotTrees(4)
-plotTrees(8)
-plotTrees(12)
-plotTrees(15)
+imgs = [1, 2, 3, 4, 6, 7, 8, 9, 12, 13, 15, 16]
+counter = 1
+for i in imgs:
+	counter = plotTrees(i, counter)
